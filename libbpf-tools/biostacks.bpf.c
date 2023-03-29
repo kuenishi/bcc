@@ -9,7 +9,6 @@
 #include "maps.bpf.h"
 
 #define MAX_ENTRIES	10240
-#define NULL		0
 
 const volatile bool targ_ms = false;
 const volatile dev_t targ_dev = -1;
@@ -85,7 +84,6 @@ int BPF_PROG(blk_account_io_done, struct request *rq)
 {
 	u64 slot, ts = bpf_ktime_get_ns();
 	struct internal_rqinfo *i_rqinfop;
-	struct rqinfo *rqinfop;
 	struct hist *histp;
 	s64 delta;
 

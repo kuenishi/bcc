@@ -27,7 +27,8 @@ static struct env {
 };
 
 const char *argp_program_version = "cpufreq 0.1";
-const char *argp_program_bug_address = "<bpf@vger.kernel.org>";
+const char *argp_program_bug_address =
+	"https://github.com/iovisor/bcc/tree/master/libbpf-tools";
 const char argp_program_doc[] =
 "Sampling CPU freq system-wide & by process. Ctrl-C to end.\n"
 "\n"
@@ -42,12 +43,16 @@ static const struct argp_option opts[] = {
 	{ "duration", 'd', "DURATION", 0, "Duration to sample in seconds" },
 	{ "frequency", 'f', "FREQUENCY", 0, "Sample with a certain frequency" },
 	{ "verbose", 'v', NULL, 0, "Verbose debug output" },
+	{ NULL, 'h', NULL, OPTION_HIDDEN, "Show the full help" },
 	{},
 };
 
 static error_t parse_arg(int key, char *arg, struct argp_state *state)
 {
 	switch (key) {
+	case 'h':
+		argp_state_help(state, stderr, ARGP_HELP_STD_HELP);
+		break;
 	case 'v':
 		env.verbose = true;
 		break;
@@ -213,6 +218,11 @@ int main(int argc, char **argv)
 	if (!obj) {
 		fprintf(stderr, "failed to open and/or load BPF object\n");
 		return 1;
+	}
+
+	if (!obj->bss) {
+		fprintf(stderr, "Memory-mapping BPF maps is supported starting from Linux 5.7, please upgrade.\n");
+		goto cleanup;
 	}
 
 	err = init_freqs_hmz(obj->bss->freqs_mhz, nr_cpus);

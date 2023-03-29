@@ -5,12 +5,12 @@
 from bcc import BPF
 import ctypes as ct
 from unittest import main, skipUnless, TestCase
+from utils import kernel_version_ge
 import os
 import sys
 import socket
 import struct
 from contextlib import contextmanager
-import distutils.version
 
 @contextmanager
 def redirect_stderr(to):
@@ -23,17 +23,6 @@ def redirect_stderr(to):
         finally:
             sys.stderr.flush()
             os.dup2(copied.fileno(), stderr_fd)
-
-def kernel_version_ge(major, minor):
-    # True if running kernel is >= X.Y
-    version = distutils.version.LooseVersion(os.uname()[2]).version
-    if version[0] > major:
-        return True
-    if version[0] < major:
-        return False
-    if minor and version[1] < minor:
-        return False
-    return True
 
 class TestClang(TestCase):
     def test_complex(self):
@@ -1254,7 +1243,8 @@ int test(struct pt_regs *ctx, struct mm_struct *mm) {
 struct bpf_map;
 BPF_HASH(map);
 int map_delete(struct pt_regs *ctx, struct bpf_map *bpfmap, u64 *k) {
-    map.increment(42, 10);
+    map.increment(42, 5);
+    map.atomic_increment(42, 5);
     return 0;
 }
 """)

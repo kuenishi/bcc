@@ -116,8 +116,8 @@ bpf_text = """
 #define MAXBLOCK_US    MAXBLOCK_US_VALUEULL
 
 struct key_t {
-    u32 pid;
-    u32 tgid;
+    u64 pid;
+    u64 tgid;
     int user_stack_id;
     int kernel_stack_id;
     char name[TASK_COMM_LEN];
@@ -205,14 +205,18 @@ else:
     thread_context = "all threads"
     thread_filter = '1'
 if args.state == 0:
-    state_filter = 'prev->state == 0'
+    state_filter = 'prev->STATE_FIELD == 0'
 elif args.state:
     # these states are sometimes bitmask checked
-    state_filter = 'prev->state & %d' % args.state
+    state_filter = 'prev->STATE_FIELD & %d' % args.state
 else:
     state_filter = '1'
 bpf_text = bpf_text.replace('THREAD_FILTER', thread_filter)
 bpf_text = bpf_text.replace('STATE_FILTER', state_filter)
+if BPF.kernel_struct_has_field(b'task_struct', b'__state') == 1:
+    bpf_text = bpf_text.replace('STATE_FIELD', '__state')
+else:
+    bpf_text = bpf_text.replace('STATE_FIELD', 'state')
 
 # set stack storage size
 bpf_text = bpf_text.replace('STACK_STORAGE_SIZE', str(args.stack_storage_size))
@@ -251,7 +255,8 @@ if debug or args.ebpf:
 
 # initialize BPF
 b = BPF(text=bpf_text)
-b.attach_kprobe(event="finish_task_switch", fn_name="oncpu")
+b.attach_kprobe(event_re="^finish_task_switch$|^finish_task_switch\.isra\.\d$",
+                fn_name="oncpu")
 matched = b.num_open_kprobes()
 if matched == 0:
     print("error: 0 functions traced. Exiting.", file=stderr)

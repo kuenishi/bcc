@@ -41,7 +41,8 @@ struct env {
 static volatile bool exiting;
 
 const char *argp_program_version = "runqlen 0.1";
-const char *argp_program_bug_address = "<bpf@vger.kernel.org>";
+const char *argp_program_bug_address =
+	"https://github.com/iovisor/bcc/tree/master/libbpf-tools";
 const char argp_program_doc[] =
 "Summarize scheduler run queue length as a histogram.\n"
 "\n"
@@ -61,6 +62,7 @@ static const struct argp_option opts[] = {
 	{ "runqocc", 'O', NULL, 0, "Report run queue occupancy" },
 	{ "timestamp", 'T', NULL, 0, "Include timestamp on output" },
 	{ "verbose", 'v', NULL, 0, "Verbose debug output" },
+	{ NULL, 'h', NULL, OPTION_HIDDEN, "Show the full help" },
 	{},
 };
 
@@ -69,6 +71,9 @@ static error_t parse_arg(int key, char *arg, struct argp_state *state)
 	static int pos_args;
 
 	switch (key) {
+	case 'h':
+		argp_state_help(state, stderr, ARGP_HELP_STD_HELP);
+		break;
 	case 'v':
 		env.verbose = true;
 		break;
@@ -259,6 +264,11 @@ int main(int argc, char **argv)
 	err = runqlen_bpf__load(obj);
 	if (err) {
 		fprintf(stderr, "failed to load BPF object: %d\n", err);
+		goto cleanup;
+	}
+
+	if (!obj->bss) {
+		fprintf(stderr, "Memory-mapping BPF maps is supported starting from Linux 5.7, please upgrade.\n");
 		goto cleanup;
 	}
 

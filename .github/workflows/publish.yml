@@ -1,6 +1,10 @@
 name: Publish Build Artifacts
 
-on: push
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   publish_images:
@@ -88,10 +92,14 @@ jobs:
           else
             echo "Custom docker credentials not, skipping"
           fi
+      env:
+        DOCKER_IMAGE: ${{ secrets.DOCKER_IMAGE }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build container image and publish to registry
       id: publish-registry
-      uses: elgohr/Publish-Docker-Github-Action@2.8
+      uses: elgohr/Publish-Docker-Github-Action@v5
       if: ${{ steps.vars.outputs.DOCKER_PUBLISH }}
       with:
         name: ${{ secrets.DOCKER_IMAGE }}

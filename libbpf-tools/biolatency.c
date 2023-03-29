@@ -36,7 +36,8 @@ static struct env {
 static volatile bool exiting;
 
 const char *argp_program_version = "biolatency 0.1";
-const char *argp_program_bug_address = "<bpf@vger.kernel.org>";
+const char *argp_program_bug_address =
+	"https://github.com/iovisor/bcc/tree/master/libbpf-tools";
 const char argp_program_doc[] =
 "Summarize block device I/O latency as a histogram.\n"
 "\n"
@@ -59,6 +60,7 @@ static const struct argp_option opts[] = {
 	{ "flag", 'F', NULL, 0, "Print a histogram per set of I/O flags" },
 	{ "disk",  'd', "DISK",  0, "Trace this disk only" },
 	{ "verbose", 'v', NULL, 0, "Verbose debug output" },
+	{ NULL, 'h', NULL, OPTION_HIDDEN, "Show the full help" },
 	{},
 };
 
@@ -67,6 +69,9 @@ static error_t parse_arg(int key, char *arg, struct argp_state *state)
 	static int pos_args;
 
 	switch (key) {
+	case 'h':
+		argp_state_help(state, stderr, ARGP_HELP_STD_HELP);
+		break;
 	case 'v':
 		env.verbose = true;
 		break;
